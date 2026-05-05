@@ -5,74 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lattu Spinning Top Game</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f0f0; }
-        canvas { border: 1px solid #000; display: block; margin: auto; }
-        #game-over { display: none; }
+        body { margin: 0; }
+        canvas { display: block; margin: auto; background: #eee; }
     </style>
 </head>
 <body>
-    <h1>Lattu Spinning Top Game</h1>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="game-over">
-        <h2>Game Over</h2>
-        <button onclick="restartGame()">Play Again</button>
-    </div>
+    <canvas id="arena"></canvas>
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const context = canvas.getContext('2d');
+        const canvas = document.getElementById('arena');
+        const ctx = canvas.getContext('2d');
+        const tops = []; // Array to hold the tops
+        const audio = new (window.AudioContext || window.webkitAudioContext)(); // Web Audio API setup
+        let gameState = 'menu'; // Game states: menu, playing, gameover
 
-        let lattu, gravity = 0.5, friction = 0.99;
-        let isGameOver = false;
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         class Lattu {
-            constructor(x, y) {
+            constructor(x, y, angle, radius) {
                 this.x = x;
                 this.y = y;
-                this.angle = Math.random() * 360;
-                this.spinSpeed = Math.random() * 10 + 5;
-                this.radius = 20;
+                this.angle = angle;
+                this.radius = radius;
+                this.speed = 0;
+                this.spin = 0;
+                this.gravity = 0.5;
+                this.friction = 0.99;
+                this.spinDecay = 0.98;
+                this.isThrown = false;
             }
+
             update() {
-                this.angle += this.spinSpeed;
-                this.y += gravity;
-                this.spinSpeed *= friction;
-                if (this.spinSpeed < 0.1) {
-                    isGameOver = true;
-                    document.getElementById('game-over').style.display = 'block';
+                if (this.isThrown) {
+                    this.speed *= this.friction;
+                    this.spin *= this.spinDecay;
+                    this.y += this.gravity;  
+                    this.angle += this.spin;
+                    if (this.speed < 0.1) this.isThrown = false;  
                 }
             }
+
             draw() {
-                context.save();
-                context.translate(this.x, this.y);
-                context.rotate(this.angle * Math.PI / 180);
-                context.fillStyle = 'blue';
-                context.beginPath();
-                context.arc(0, 0, this.radius, 0, Math.PI * 2);
-                context.fill();
-                context.restore();
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'blue';
+                ctx.fill();
+                ctx.restore();
             }
         }
 
-        function init() {
-            lattu = new Lattu(canvas.width / 2, canvas.height / 2);
-            animate();
+        function launchLattu(x, y) {
+            const lattu = new Lattu(x, y, 0, 20);
+            lattu.speed = 5;
+            lattu.spin = 0.1;
+            lattu.isThrown = true;
+            tops.push(lattu);
         }
 
-        function animate() {
-            if (isGameOver) return;
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            lattu.update();
-            lattu.draw();
-            requestAnimationFrame(animate);
+        canvas.addEventListener('mousedown', (e) => {
+            launchLattu(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            launchLattu(touch.clientX, touch.clientY);
+        });
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            tops.forEach(top => top.update());
+            tops.forEach(top => top.draw());
+            requestAnimationFrame(update);
         }
 
-        function restartGame() {
-            isGameOver = false;
-            document.getElementById('game-over').style.display = 'none';
-            init();
-        }
-
-        window.onload = init;
+        update();  // Start the animation loop
     </script>
 </body>
 </html>
