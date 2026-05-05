@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lattu Spinning Top Game</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f1f1f1; }
+        canvas { border: 1px solid #000; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let spinner = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 30,
+            angle: 0,
+            speed: 0.05
+        };
+
+        function drawSpinner() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(spinner.x, spinner.y);
+            ctx.rotate(spinner.angle);
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(0, 0, spinner.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            spinner.angle += spinner.speed;
+        }
+
+        function gameLoop() {
+            drawSpinner();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
