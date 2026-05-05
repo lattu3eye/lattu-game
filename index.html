@@ -5,43 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lattu Spinning Top Game</title>
     <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f1f1f1; }
-        canvas { border: 1px solid #000; }
+        body { font-family: Arial, sans-serif; background: #f0f0f0; }
+        canvas { border: 1px solid #000; display: block; margin: auto; }
+        #game-over { display: none; }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <h1>Lattu Spinning Top Game</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="game-over">
+        <h2>Game Over</h2>
+        <button onclick="restartGame()">Play Again</button>
+    </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        const context = canvas.getContext('2d');
 
-        let spinner = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            radius: 30,
-            angle: 0,
-            speed: 0.05
-        };
+        let lattu, gravity = 0.5, friction = 0.99;
+        let isGameOver = false;
 
-        function drawSpinner() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            ctx.translate(spinner.x, spinner.y);
-            ctx.rotate(spinner.angle);
-            ctx.fillStyle = 'blue';
-            ctx.beginPath();
-            ctx.arc(0, 0, spinner.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-            spinner.angle += spinner.speed;
+        class Lattu {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.angle = Math.random() * 360;
+                this.spinSpeed = Math.random() * 10 + 5;
+                this.radius = 20;
+            }
+            update() {
+                this.angle += this.spinSpeed;
+                this.y += gravity;
+                this.spinSpeed *= friction;
+                if (this.spinSpeed < 0.1) {
+                    isGameOver = true;
+                    document.getElementById('game-over').style.display = 'block';
+                }
+            }
+            draw() {
+                context.save();
+                context.translate(this.x, this.y);
+                context.rotate(this.angle * Math.PI / 180);
+                context.fillStyle = 'blue';
+                context.beginPath();
+                context.arc(0, 0, this.radius, 0, Math.PI * 2);
+                context.fill();
+                context.restore();
+            }
         }
 
-        function gameLoop() {
-            drawSpinner();
-            requestAnimationFrame(gameLoop);
+        function init() {
+            lattu = new Lattu(canvas.width / 2, canvas.height / 2);
+            animate();
         }
 
-        gameLoop();
+        function animate() {
+            if (isGameOver) return;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            lattu.update();
+            lattu.draw();
+            requestAnimationFrame(animate);
+        }
+
+        function restartGame() {
+            isGameOver = false;
+            document.getElementById('game-over').style.display = 'none';
+            init();
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
